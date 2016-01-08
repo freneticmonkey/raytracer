@@ -15,14 +15,14 @@ project "raytracer"
    kind "ConsoleApp"
    language "C++"
    targetdir( "build" )
-
+   includedirs { "raytracer/glm", "task/task" }
+   
    filter "platforms:Win32"
-      includedirs { SDL_PATH .. "/include", "raytracer/glm" }
+      includedirs { SDL_PATH .. "/include" }
       libdirs { SDL_PATH .. "/lib/x86" }
       links { "SDL2", "SDL2main" }
    
    filter "platforms:macosx"
-      includedirs { "raytracer/glm" }
       links { "SDL2.framework" }
       buildoptions "-std=c++11 -stdlib=libc++"
 
