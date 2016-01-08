@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <chrono>
+#include <ratio>
+
 #ifdef _WIN32
 #include <SDL.h>
 #else
@@ -21,27 +24,19 @@
 #include "windowsconsole.h"
 #endif
 
-double diffclock(clock_t clock1,clock_t clock2) 
-{ 
-	double diffticks=clock1-clock2; 
-	double diffms=(diffticks*1000)/CLOCKS_PER_SEC; 
-	return diffms; 
-}
-
 void UpdateRender(Raytracer * raytracer, SDL_Window * window, int width, int height)
 {
-	clock_t start = clock();
-	std::cout << "Start: " << start << std::endl;
-    raytracer->run(width, height, 8);
+    auto start = std::chrono::steady_clock::now();
+    
+    raytracer->run(width, height);
     
     raytracer->WriteToSurface(SDL_GetWindowSurface(window), width, height);
     
-	clock_t end = clock();
-	std::cout << "End: " << end << std::endl;
-
-	printf("Elapsed Time: %3.3f\n", diffclock(end, start));
-	fflush(stdout);
-
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+    
+    std::cout << "Elapsed Time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
+    
     SDL_UpdateWindowSurface(window);
 }
 

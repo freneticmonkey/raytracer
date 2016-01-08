@@ -56,7 +56,7 @@ class Raytracer
             SDL_UnlockSurface(surface);
     }
     
-    void run(int width, int height, int threads = 1);
+    void run(int width, int height);
     
     void WriteToSurface(SDL_Surface * surface, int width, int height);
 private:

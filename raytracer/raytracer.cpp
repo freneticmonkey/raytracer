@@ -6,6 +6,7 @@
 //
 
 #include <iostream>
+#include <thread>
 
 #include "raytracer.h"
 
@@ -48,9 +49,11 @@ void Raytracer::setupScene(ScenePtr scene, int width, int height)
 	scene->setupRender(width, height);
 }
 
-void Raytracer::run(int width, int height, int threads)
+void Raytracer::run(int width, int height)
 {
 	// Render
+    
+    unsigned int threads = std::thread::hardware_concurrency();
 		
 	if ( threads == 1 )
 	{
