@@ -25,19 +25,27 @@ typedef std::shared_ptr<Scene> ScenePtr;
 
 class Raytracer
 {
-    public:
-    Raytracer()
-    {
-		//camPos = vec3(5.0f, 2.5f, 3.0f);
-		camPos = vec3(0.0f, 2.5f, -5.0f);
-    };
+public:
+    Raytracer();
     ~Raytracer() {};
 
-	void moveX(float unit) { camPos.x += unit; }
-	void moveY(float unit) { camPos.y += unit; }
-	void moveZ(float unit) { camPos.z += unit; }    
+	void moveX(float unit)
+    {
+        camPos.x += unit;
+        m_scene->moveTo(camPos);
+    }
+    void moveY(float unit)
+    {
+        camPos.y += unit;
+        m_scene->moveTo(camPos);
+    }
+    void moveZ(float unit)
+    {
+        camPos.z += unit;
+        m_scene->moveTo(camPos);
+    }
 
-	void setupScene(ScenePtr scene, int width, int height);
+	void setupScene(int width, int height);
 
 	// Grabbed from StackOverflow.
     void PutPixel32_nolock(SDL_Surface * surface, int x, int y, Uint32 color)
@@ -56,13 +64,15 @@ class Raytracer
             SDL_UnlockSurface(surface);
     }
     
-    void run(int width, int height);
+    void run();
     
     void WriteToSurface(SDL_Surface * surface, int width, int height);
 private:
     PixelsPtr m_pixels;
-
 	vec3 camPos;
+    ScenePtr m_scene;
+    int m_sectionSize;
+    unsigned int m_threads;
     
 };
 

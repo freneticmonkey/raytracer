@@ -10,20 +10,32 @@
 
 #include "raytracer.h"
 
-void Raytracer::setupScene(ScenePtr scene, int width, int height)
+Raytracer::Raytracer()
 {
-	scene->moveTo(camPos);
-	scene->addLight(vec3(0.0f, -10.0f, -10.0f));
+    camPos = vec3(0.0f, 2.5f, -5.0f);
+    m_scene = ScenePtr(new Scene());
+    
+    m_threads = std::thread::hardware_concurrency();
+    
+};
+
+
+void Raytracer::setupScene(int width, int height)
+{
+    // Configure the base scene
+    m_sectionSize = height / m_threads;
+    
+	m_scene->addLight(vec3(0.0f, -10.0f, -10.0f));
 	//scene->addLight(vec3(0.0f, 10.f, 10.0f));
-	scene->lookAt(vec3(0.0f, 4.0f, 0.0f));
+	m_scene->lookAt(vec3(0.0f, 4.0f, 0.0f));
 
 	ObjectPtr firstSphere( new Sphere(vec3(-2.5f, 3.0f, 0.0f), 1.0f));
 	firstSphere->material()->setColour(vec3(1.0f, 0.0f, 0.0f))->setTurbulance(0.5)->setBump(10.0);
-	scene->addObject( firstSphere );
+	m_scene->addObject( firstSphere );
 	
 	//scene->addObject( ObjectPtr( new Sphere(vec3(1.25f, 3.0f, 0.0f), 1.0f, new Material(vec3(0.0f, 1.0f, 0.0f)))) );
 
-	scene->addObject( ObjectPtr( new Sphere(vec3(2.5f, 3.0f, 0.0f), 
+	m_scene->addObject( ObjectPtr( new Sphere(vec3(2.5f, 3.0f, 0.0f),
 											1.0f, 
 											new CheckerboardMaterial(vec3(0.0f, 0.0f, 1.0f), 
 																	 vec3(1.0f, 0.5f, 0.0f),
@@ -37,93 +49,66 @@ void Raytracer::setupScene(ScenePtr scene, int width, int height)
 								   ->setOtherColour( vec3(0.0f) )
 								   ->setMarble(0.5);
 								   //->setTurbulance(0.5);
-	scene->addObject( newSphere );
+	m_scene->addObject( newSphere );
 
 	//scene->addObject( ObjectPtr( new HalfSpace(vec3(0.0f), vec3(0.0f, 1.0f, 0.0f), new Material(vec3(1.0f, 0.0f, 0.0f)) )) );
-	scene->addObject( ObjectPtr( new HalfSpace(vec3(0.0f), vec3(0.0f, 1.0f, 0.0f), new CheckerboardMaterial())) );
+	m_scene->addObject( ObjectPtr( new HalfSpace(vec3(0.0f), vec3(0.0f, 1.0f, 0.0f), new CheckerboardMaterial())) );
 	
 	// Walls
 	//scene->addObject( ObjectPtr( new HalfSpace(vec3(-4.0f, 2.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f), new Material(vec3(1.0f, 0.0f, 0.0f)) )) );
 	//scene->addObject( ObjectPtr( new HalfSpace(vec3(4.0f, 2.0f, 0.0f), vec3(-1.0f, 0.0f, 0.0f), new Material(vec3(0.0f, 1.0f, 0.0f)) )) );
 
-	scene->setupRender(width, height);
+    m_scene->setupRender(width, height);
 }
 
-void Raytracer::run(int width, int height)
+void Raytracer::run()
 {
-	// Render
+    // Render
+    m_scene->moveTo(camPos);
     
-    unsigned int threads = std::thread::hardware_concurrency();
-		
-	if ( threads == 1 )
-	{
-		ScenePtr scene(new Scene(0, height));
-		setupScene(scene, width, height);
-		m_pixels = scene->getPixels();
-	}
-	else
-	{
-		m_pixels = PixelsPtr(new Pixels());
+    std::vector<ThreadPtr> threadList;
+    
+    auto start = std::chrono::steady_clock::now();
+    
+    // Kick off rendering
+    for ( int i = 0; i < m_threads; i++ )
+    {
+        // Configure the thread render region
+        int from = i * m_sectionSize;
+        int to = from + m_sectionSize;
+        std::cout << "From " << from << " To: " << to << std::endl;
+        ThreadPtr renderThread = ThreadPtr(new std::thread(std::bind(&Scene::renderArea, m_scene, from, to)) );
+        threadList.push_back( renderThread );
+    }
 
-		int sectionSize = height / threads;
-		std::vector<ThreadPtr> threadList;
-		std::vector<ScenePtr> threadScenes;
-
-		// Configure the thread objects
-		for ( int i = 0; i < threads; i++ )
-		{
-			int from = i * sectionSize;
-			int to = from + sectionSize;
-			ScenePtr newScene = ScenePtr(new Scene(from, to) );
-			setupScene(newScene, width, height);
-			threadScenes.push_back(newScene);
-		}
-
-		// Kick off rendering
-		for ( int i = 0; i < threads; i++ )
-		{
-			ThreadPtr renderThread = ThreadPtr(new std::thread(&Scene::renderArea, threadScenes[i]) );
-			threadList.push_back( renderThread );
-		}
-
-		// Join the render threads
-		for ( auto &thread : threadList )
-		{
-			thread->join();
-		}
-
-		
-		// build the pixel result.
-		int sectionCount = 0;
-		for ( std::vector<ScenePtr>::iterator aScene = threadScenes.begin(); aScene != threadScenes.end(); aScene++ )
-		{
-			ScenePtr scene = *aScene;
-			PixelsPtr pixels = scene->getPixels();
-
-			std::cout << "Length Section: "<< sectionCount << " # lines: " << pixels->size() << std::endl;
-			for (auto &line : *pixels)
-			{
-				m_pixels->push_back(line);
-			}
-			sectionCount++;
-		}
-	}
+    // Join the render threads
+    for ( auto &thread : threadList )
+    {
+        thread->join();
+    }
+    
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+    
+    std::cout << "Calculation Time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 
 }
     
 void Raytracer::WriteToSurface(SDL_Surface * surface, int width, int height)
 {
-    std::cout << "height: " << m_pixels->size() << std::endl;
-        
-    int y = 0;
-
-	if ( m_pixels->size() == height )
+    auto start = std::chrono::steady_clock::now();
+    
+    PixelsPtr pixels = m_scene->getPixels();
+    
+    std::cout << "height: " << pixels->size() << std::endl;
+    
+    if ( pixels->size() == height )
 	{
 
 		//for ( auto & line : m_pixels )
 		for ( int y = 0; y < height; y++ )
 		{
-			PixelLinePtr line = m_pixels->at(y);
+			PixelLinePtr line = pixels->at(y);
 
 			if ( y == 0 )
 			{
@@ -136,7 +121,6 @@ void Raytracer::WriteToSurface(SDL_Surface * surface, int width, int height)
 				}
 			}
             
-			int x = 0;
 			//for ( auto & pixel : line)
 			for ( int x = 0; x < width; x++ )
 			{
@@ -160,4 +144,10 @@ void Raytracer::WriteToSurface(SDL_Surface * surface, int width, int height)
 	{
 		std::cout << "ERROR: Invalid number of y pixels: " << m_pixels->size() << std::endl;
 	}
+    
+    
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+    
+    std::cout << "Blit Time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 }

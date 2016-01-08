@@ -34,7 +34,7 @@ Sphere::Sphere(vec3 centre, float radius, Material * material) : Object("Sphere"
     m_radius = radius;
 }
 
-float * Sphere::intersectionTime(Ray ray)
+float * Sphere::intersectionTime(const Ray& ray)
 {
     vec3 cp = m_centre - ray.point();
     float v = dot(cp, ray.vector());
@@ -61,7 +61,7 @@ HalfSpace::HalfSpace(vec3 point, vec3 normal, Material * material) : Object("Pla
     m_normal = normal;
 }
 
-float * HalfSpace::intersectionTime(Ray ray)
+float * HalfSpace::intersectionTime(const Ray& ray)
 {
     float v = dot( ray.vector(), m_normal );
     

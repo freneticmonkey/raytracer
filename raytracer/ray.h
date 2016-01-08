@@ -22,10 +22,10 @@ public:
     };
     ~Ray() {};
     
-    vec3 point() { return m_point; }
-    vec3 vector() { return m_vector; }
+    const vec3& point() const { return m_point; }
+    const vec3& vector() const { return m_vector; }
     
-    vec3 pointAtTime(float * t)
+    vec3 pointAtTime(float* t) const
     {
         return m_point + m_vector * (*t);
     }

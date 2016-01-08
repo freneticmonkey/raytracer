@@ -47,7 +47,7 @@ public:
     float ambient();
 
 	virtual vec3 colourAt(vec3 point);
-    vec3 colourAt(Ray ray, vec3 point, vec3 normal, Scene * scene );
+    vec3 colourAt(const Ray &ray, vec3 point, vec3 normal, Scene * scene, int& recursionDepth );
     
 protected:
     vec3  m_colour;

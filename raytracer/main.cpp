@@ -28,7 +28,7 @@ void UpdateRender(Raytracer * raytracer, SDL_Window * window, int width, int hei
 {
     auto start = std::chrono::steady_clock::now();
     
-    raytracer->run(width, height);
+    raytracer->run();
     
     raytracer->WriteToSurface(SDL_GetWindowSurface(window), width, height);
     
@@ -79,6 +79,8 @@ int main(int argc, char * argv[])
                                            SDL_WINDOW_OPENGL);
     
     Raytracer raytracer;
+    
+    raytracer.setupScene(width, height);
     
 	UpdateRender(&raytracer, window, width, height);
 

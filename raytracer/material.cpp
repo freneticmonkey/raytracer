@@ -115,7 +115,7 @@ vec3 Material::colourAt(vec3 point)
     return m_colour;
 }
 
-vec3 Material::colourAt(Ray ray, vec3 point, vec3 normal, Scene * scene)
+vec3 Material::colourAt(const Ray& ray, vec3 point, vec3 normal, Scene * scene, int& recursionDepth)
 {
     vec3 base = colourAt(point);
     vec3 colour(0.0f);
@@ -140,8 +140,8 @@ vec3 Material::colourAt(Ray ray, vec3 point, vec3 normal, Scene * scene)
 
 	if (m_specular > 0.0f )
     {
-        Ray reflectedRay = Ray(point, reflect(ray.vector(), normal));
-        vec3 reflectedColour = scene->rayColour(reflectedRay);
+        Ray reflectedRay(point, reflect(ray.vector(), normal));
+        vec3 reflectedColour = scene->rayColour(reflectedRay, recursionDepth);
         colour = addColours(colour, m_specular, reflectedColour);
     }
     

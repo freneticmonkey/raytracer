@@ -24,7 +24,7 @@ public:
     Object(std::string name, Material * material = NULL);
     virtual ~Object();
     
-    virtual float * intersectionTime(Ray r) = 0;
+    virtual float * intersectionTime(const Ray& ray) = 0;
     virtual vec3 normalAt(vec3 point) = 0;
     
     std::string getName() { return m_name; }
@@ -45,7 +45,7 @@ public:
     vec3 centre() { return m_centre; }
     float radius()  { return m_radius; }
     
-    float * intersectionTime(Ray ray);
+    float * intersectionTime(const Ray& ray);
     vec3 normalAt(vec3 point);
     
 private:
@@ -62,7 +62,7 @@ public:
     vec3 point() { return m_point; }
     vec3 normal() { return m_normal; }
     
-    float * intersectionTime(Ray ray);
+    float * intersectionTime(const Ray& ray);
     
     vec3 normalAt(vec3 point) { return m_normal; }
     

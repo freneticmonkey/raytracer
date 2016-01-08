@@ -63,7 +63,7 @@ typedef std::shared_ptr<Ray> RayPtr;
 class Scene
 {
 public:
-    Scene(int renderStart, int renderEnd);
+    Scene();
     ~Scene();
     
     void moveTo(vec3 p);
@@ -72,13 +72,12 @@ public:
     void addLight(vec3 point);
     void setupRender(int width, int height);
 	
-	//void renderArea(int start, int end, PixelsPtr result);
-	void renderArea();
+	void renderArea(int renderStart, int renderEnd);
     
 	// Single threaded function - renders all pixels
     PixelsPtr getPixels();
     
-    vec3 rayColour(Ray ray);
+    vec3 rayColour(const Ray& ray, int& recursionDepth);
     Lights getVisibleLights(vec3 point);
     
     static const int MAX_RECURSION_DEPTH = 3;

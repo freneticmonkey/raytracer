@@ -6,14 +6,8 @@
 //
 
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include <iostream>
-
-#ifdef _WIN32
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
 
 #include "scene.h"
 
@@ -23,15 +17,13 @@
 const float Scene::EPSILON = 0.00001f;
 #endif
 
-Scene::Scene(int renderStart, int renderEnd)
+Scene::Scene()
 {
     m_position = vec3(0.0f, 1.8f, 10.0f);
     m_lookingAt = vec3(0.0f);
     m_fieldOfView = 45.0f;
     m_recursionDepth = 0;
 
-	m_renderStart = renderStart;
-	m_renderEnd = renderEnd;
 	m_pixels = PixelsPtr(new Pixels());
 }
 
@@ -44,6 +36,11 @@ void Scene::moveTo(vec3 p)
     m_position = p;
 	printf("New Pos: x: %3.2f y: %3.2f z: %3.2f\n", m_position.x, m_position.y, m_position.z );
 	fflush(stdout);
+    
+    eye = RayPtr(new Ray(m_position, m_lookingAt - m_position));
+    vec3 cvec = cross(eye->vector(), vec3(0.0f, 1.0f, 0.0f));
+    vpRight = normalize(cvec);
+    vpUp = normalize(cross(vpRight, eye->vector()));
 }
 
 void Scene::lookAt(vec3 p)
@@ -73,52 +70,42 @@ void Scene::setupRender(int width, int height)
     pixelWidth = camWidth / (width - 1);
     pixelHeight = camHeight / (height - 1);
     
-    eye = RayPtr(new Ray(m_position, m_lookingAt - m_position));
-    vec3 cvec = cross(eye->vector(), vec3(0.0f, 1.0f, 0.0f));
-    vpRight = normalize(cvec);
-    vpUp = normalize(cross(vpRight, eye->vector()));
+    // Initialise Pixel Storage
     
+    // Resize outer vertical
+    m_pixels->resize(configHeight);
+    Pixels::iterator p = m_pixels->begin();
+    
+    // Fill inner horizontal
+    for ( int i = 0; i < configHeight; i++ )
+    {
+        PixelLinePtr xpixels = PixelLinePtr(new PixelLine());
+        xpixels->resize(configWidth);
+        *p = xpixels;
+        p++;
+    }
 }
 
-//void Scene::renderArea(int start, int end, PixelsPtr result)
-void Scene::renderArea()
+void Scene::renderArea(int renderStart, int renderEnd)
 {
-	float previousfraction = 0.0f;
-	//Pixels ypixels;
-
-	// Resize the vector to the section size
-	m_pixels->resize(m_renderEnd - m_renderStart);
-	Pixels::iterator p = m_pixels->begin();
+    m_renderStart = renderStart;
+    m_renderEnd = renderEnd;
+    int recursionDepth = 0;
     for (int y = m_renderStart; y < m_renderEnd; y++)
     {
-        float currentfraction = (float)(y - m_renderStart) / (m_renderEnd - m_renderStart);
-        if ( currentfraction - previousfraction > 0.05f)
-        {
-			//printf("Render: %d : %d: Complete: %2.2f\n", m_renderStart, m_renderEnd, (currentfraction * 100) );
-			//fflush(stdout);
-            //std::cout << (currentfraction * 100) << "% complete" << std::endl;
-            previousfraction = currentfraction;
-        }
+		PixelLine::iterator px = (*m_pixels)[y]->begin();
         
-        PixelLinePtr xpixels = PixelLinePtr(new PixelLine());
-		xpixels->resize(configWidth);
-		PixelLine::iterator px = xpixels->begin();
+        vec3 ycomp = vpUp * (y * pixelHeight - halfHeight);
 
         for (int x = 0; x < configWidth; x++ )
         {
-            vec3 colour;
-            
             vec3 xcomp = vpRight * (x * pixelWidth - halfWidth);
-            vec3 ycomp = vpUp  * (y * pixelHeight - halfHeight);
-            Ray ray = Ray(eye->point(), eye->vector() + xcomp + ycomp);
-            colour = rayColour(ray);
-            //xpixels->push_back(colour);
-			*px = colour;
+            Ray ray(eye->point(), eye->vector() + xcomp + ycomp);
+            recursionDepth = 0;
+            vec3 colour = rayColour(ray, recursionDepth);
+            *px = colour;
 			px++;
         }
-        //result->assign( = xpixels;
-		*p = xpixels;
-		p++;
     }
 }
 
@@ -128,15 +115,14 @@ PixelsPtr Scene::getPixels()
 	return m_pixels;
 }
 
-vec3 Scene::rayColour(Ray ray)
+vec3 Scene::rayColour(const Ray& ray, int& recursionDepth)
 {
-    if ( m_recursionDepth > Scene::MAX_RECURSION_DEPTH )
+    if ( recursionDepth > Scene::MAX_RECURSION_DEPTH || recursionDepth < 0)
     {
         return vec3(0.0f);
     }
     
-    
-    m_recursionDepth += 1;
+    recursionDepth += 1;
     
     Intersections ints;
     
@@ -159,13 +145,12 @@ vec3 Scene::rayColour(Ray ray)
         returnColour = intersection->object->material()->colourAt(ray,
                                                                  point,
                                                                  intersection->object->normalAt(point),
-                                                                 this
-                                                                 );
-        
-    }
+                                                                 this,
+                                                                 recursionDepth
+                                                                 );    }
     deleteContainer(ints);
     
-    m_recursionDepth -= 1;
+    recursionDepth -= 1;
     return returnColour;
 }
 
