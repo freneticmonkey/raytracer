@@ -15,7 +15,7 @@ Raytracer::Raytracer()
     camPos = vec3(0.0f, 2.5f, -5.0f);
     m_scene = ScenePtr(new Scene());
     
-    m_threads = std::thread::hardware_concurrency();
+	m_threads = std::thread::hardware_concurrency();
     
 };
 

@@ -5,13 +5,13 @@
 //  Created by Scott Porter on 22/09/13.
 //
 
+#define _USE_MATH_DEFINES
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 
 #include "scene.h"
-
-#define _USE_MATH_DEFINES
 
 #ifdef _WIN32
 const float Scene::EPSILON = 0.00001f;
