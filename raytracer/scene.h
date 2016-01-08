@@ -87,7 +87,7 @@ public:
 	static const float EPSILON;
 #endif
 #ifdef __APPLE__
-    constexpr static const float EPSILON = 0.00001f;
+    static constexpr float EPSILON = 0.00001f;
 #endif
     
 private:

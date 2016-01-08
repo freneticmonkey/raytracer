@@ -10,7 +10,12 @@
 
 #include <algorithm>
 #include <thread>
+
+#ifdef _WIN32
 #include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
 
 #include "geometry.h"
 #include "scene.h"

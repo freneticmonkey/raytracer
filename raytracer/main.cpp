@@ -9,7 +9,11 @@
 #include <stdio.h>
 #include <time.h>
 
+#ifdef _WIN32
 #include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
 
 #include "raytracer.h"
 
@@ -54,7 +58,8 @@ int main(int argc, char * argv[])
         return -1;
     }
     
-    bool testRes = true;
+    bool testRes = false;
+    bool highRes = false;
     
     int width = 640;
     int height = 480;
@@ -63,6 +68,12 @@ int main(int argc, char * argv[])
     {
         width = 128;
         height = 96;
+    }
+    
+    if ( highRes )
+    {
+        width = 1920;
+        height = 1080;
     }
     
     SDL_Window * window = SDL_CreateWindow("Raytracing!!",
