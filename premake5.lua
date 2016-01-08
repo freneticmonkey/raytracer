@@ -1,5 +1,5 @@
 
-local SDL_PATH = "C:/Dev/Resources/C++/SDL2-2.0.0"
+local SDL_PATH = "C:/Development/Resources/SDL/SDL2-2.0.3"
 
 solution "raytracer"
    filename "raytracer"
