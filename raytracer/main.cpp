@@ -24,22 +24,6 @@
 #include "windowsconsole.h"
 #endif
 
-void UpdateRender(Raytracer * raytracer, SDL_Window * window, int width, int height)
-{
-//    auto start = std::chrono::steady_clock::now();
-    
-    raytracer->run();
-    
-//    raytracer->WriteToSurface(SDL_GetWindowSurface(window), width, height);
-    
-//    auto end = std::chrono::steady_clock::now();
-//    auto diff = end - start;
-//    
-//    std::cout << "Elapsed Time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
-    
-    //SDL_UpdateWindowSurface(window);
-}
-
 int main(int argc, char * argv[])
 {
 #ifdef _WIN32
@@ -79,9 +63,8 @@ int main(int argc, char * argv[])
                                            SDL_WINDOW_OPENGL);
     
     Raytracer raytracer(window, width, height);
+    raytracer.run();
     
-	UpdateRender(&raytracer, window, width, height);
-
 	SDL_Event event;
     bool gameRunning = true;
     
@@ -137,19 +120,10 @@ int main(int argc, char * argv[])
 						needUpdate = true;
 						break;
                 }
-
-				if ( needUpdate )
-				{
-                    //UpdateRender(&raytracer, window, width, height);
-					needUpdate = false;
-				}
             }
         }
         
         raytracer.Pump();
-        
-        // Limit to 60 fps
-        //SDL_Delay(16);
     }
     
     

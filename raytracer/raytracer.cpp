@@ -25,8 +25,8 @@ Raytracer::Raytracer(SDL_Window * window, int width, int height)
     
 	m_threads = std::thread::hardware_concurrency();
     
-    renderActive = false;
-    useJobs = true;
+    m_renderActive = false;
+    m_useJobs = true;
     
     m_window = window;
     
@@ -36,8 +36,6 @@ Raytracer::Raytracer(SDL_Window * window, int width, int height)
     m_height = height;
     
     m_time = 0.0f;
-    
-    blitting = false;
     
     m_onStart = std::chrono::system_clock::now();
     
@@ -50,9 +48,9 @@ Raytracer::Raytracer(SDL_Window * window, int width, int height)
 
 Raytracer::~Raytracer()
 {
-    if ( jobData.size() > 0 )
+    if ( m_jobData.size() > 0 )
     {
-        for ( auto renderJob : jobData )
+        for ( auto renderJob : m_jobData )
         {
             delete renderJob;
         }
@@ -67,7 +65,7 @@ void Raytracer::setupScene()
     m_sectionSize = m_height / m_threads;
     
 	m_scene->addLight(vec3(0.0f, -10.0f, -10.0f));
-	//scene->addLight(vec3(0.0f, 10.f, 10.0f));
+//	m_scene->addLight(vec3(0.0f, -10.f, 10.0f));
 	m_scene->lookAt(vec3(0.0f, 4.0f, 0.0f));
 
 	ObjectPtr firstSphere( new Sphere(vec3(-2.5f, 3.0f, 0.0f), 1.0f));
@@ -115,11 +113,11 @@ void Raytracer::setupScene()
         jobLines = JobSystem::NUMBER_OF_JOBS / jobs;
     }
 
-    bool needInit = jobData.size() == 0;
+    bool needInit = m_jobData.size() == 0;
     
     if ( needInit )
     {
-        root = JobSystem::CreateJob(rootJob.Bind( threadRenderJob ) );
+        m_root = JobSystem::CreateJob(m_rootData.Bind( threadRenderJob ) );
         
         for (int i = 0; i < jobs; i++ )
         {
@@ -130,9 +128,9 @@ void Raytracer::setupScene()
             RayTracerData* renderJob = new RayTracerData(start, start + jobLines, m_scene);
             start += jobLines;
             
-            jobData.push_back(renderJob);
+            m_jobData.push_back(renderJob);
             
-            renderJobs.push_back( JobSystem::CreateJobAsChild(root, renderJob->Bind(threadRenderJob)) );
+            m_renderJobs.push_back( JobSystem::CreateJobAsChild(m_root, renderJob->Bind(threadRenderJob)) );
         }
     }
 }
@@ -145,7 +143,7 @@ void Raytracer::threadRenderJob(JobSystem::Job* job, RayTracerData *data)
 void Raytracer::run()
 {
     // Render
-    if ( !renderActive )
+    if ( !m_renderActive )
     {
         m_time = std::chrono::duration <float, std::milli> (std::chrono::system_clock::now() - m_onStart).count() / 1000.0f;
         
@@ -155,26 +153,20 @@ void Raytracer::run()
         
         m_renderStart = std::chrono::steady_clock::now();
         
-        renderActive = true;
+        m_renderActive = true;
         
-        if ( useJobs )
+        if ( m_useJobs )
         {
             JobSystem::StartFrame();
+            m_root->unfinishedJobs = m_renderJobs.size() + 1;
             
-            
-            root->unfinishedJobs = renderJobs.size() + 1;
-            
-            for ( auto job : renderJobs )
+            for ( auto job : m_renderJobs )
             {
                 // Increment job and root
                 job->unfinishedJobs = 1;
                 JobSystem::Run(job);
             }
-            JobSystem::Run(root);
-            //        JobSystem::Wait(root);
-            
-            
-            
+            JobSystem::Run(m_root);
         }
         else
         {
@@ -196,20 +188,18 @@ void Raytracer::run()
                 thread->join();
             }
             
-            renderActive = false;
+            m_renderActive = false;
         }
     }
 }
 
 void Raytracer::Pump()
 {
-    m_time += 0.01;
-    
-    if ( useJobs )
+    if ( m_useJobs )
     {
-        renderActive = root->unfinishedJobs > 0;
+        m_renderActive = m_root->unfinishedJobs > 0;
         
-        if ( !renderActive )
+        if ( !m_renderActive )
         {
             auto end = std::chrono::steady_clock::now();
             auto diff = end - m_renderStart;
@@ -227,26 +217,17 @@ void Raytracer::Pump()
 
 void Raytracer::WriteToSurface()
 {
-    auto start = std::chrono::steady_clock::now();
-    
     PixelsPtr pixels = m_scene->getPixels();
-    
-    //std::cout << "height: " << pixels->size() << std::endl;
     
     if ( pixels->size() == m_height )
 	{
 
-        blitting =true;
-        
-		//for ( auto & line : m_pixels )
 		for ( int y = 0; y < m_height; y++ )
 		{
 			PixelLinePtr line = pixels->at(y);
 
 			if ( y == 0 )
 			{
-				//std::cout << "width: " << line->size() << std::endl;
-
 				if ( line->size() != m_width )
 				{
 					std::cout << "ERROR: Invalid number of x pixels: " << line->size() << std::endl;
@@ -254,37 +235,21 @@ void Raytracer::WriteToSurface()
 				}
 			}
             
-			//for ( auto & pixel : line)
 			for ( int x = 0; x < m_width; x++ )
 			{
 				vec3 pixel = line->at(x);
 
-				//std::cout << "r: " << pixel.x << " g: " << pixel.y << " z: " << pixel.z << std::endl;
-                
 				Uint8 r = std::min(255.0f, (pixel.x * 255));
-				//Uint8 r = std::min(255.0f, (x/640.0f * 255));
 				Uint8 g = std::min(255.0f, (pixel.y * 255));
-				//Uint8 g = std::min(255.0f, (y/480.0f * 255));
-                
 				Uint8 b = std::min(255.0f, (pixel.z * 255));
 				PutPixel32(m_surface, x, y, SDL_MapRGB(m_surface->format, r, g, b) );
-				//x++;
 			}
-			//y++;
 		}
-        
-        blitting = false;
 	}
 	else
 	{
 		std::cout << "ERROR: Invalid number of y pixels: " << m_pixels->size() << std::endl;
 	}
     
-    
-    auto end = std::chrono::steady_clock::now();
-    auto diff = end - start;
-    
     SDL_UpdateWindowSurface(m_window);
-    
-    //std::cout << "Blit Time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
 }

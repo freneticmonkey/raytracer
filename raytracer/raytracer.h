@@ -91,32 +91,31 @@ public:
     
     void WriteToSurface();
 private:
-    PixelsPtr m_pixels;
-	vec3 camPos;
-    ScenePtr m_scene;
-    int m_sectionSize;
-    unsigned int m_threads;
+    PixelsPtr       m_pixels;
+	vec3            camPos;
+    ScenePtr        m_scene;
+    int             m_sectionSize;
+    unsigned int    m_threads;
     
     int m_width;
     int m_height;
     
-    RayTracerData rootJob;
-    JobSystem::Job* root;
+    RayTracerData   m_rootData;
+    JobSystem::Job* m_root;
     
-    std::vector<RayTracerData *> jobData;
-    std::vector<JobSystem::Job*> renderJobs;
+    std::vector<RayTracerData*>     m_jobData;
+    std::vector<JobSystem::Job*>    m_renderJobs;
     
-    bool renderActive;
-    bool useJobs;
+    bool m_renderActive;
+    bool m_useJobs;
     
-    SDL_Surface * m_surface;
-    SDL_Window * m_window;
+    SDL_Surface*    m_surface;
+    SDL_Window*     m_window;
     
     std::chrono::steady_clock::time_point m_renderStart;
     
     float m_time;
     
-    bool blitting;
     std::chrono::system_clock::time_point m_onStart;
     
 };
