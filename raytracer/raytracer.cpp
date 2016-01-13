@@ -100,32 +100,18 @@ void Raytracer::setupScene()
     m_scene->setupRender(m_width, m_height);
     
     // Setup the jobs for the renderer
-    int jobs = 512;
     int jobLines = 1;
     int start = 0;
     
-    if ( m_height < jobs )
-    {
-        jobs = m_height;
-    }
-    else
-    {
-        jobLines = JobSystem::NUMBER_OF_JOBS / jobs;
-    }
-
     bool needInit = m_jobData.size() == 0;
     
     if ( needInit )
     {
         m_root = JobSystem::CreateJob(m_rootData.Bind( threadRenderJob ) );
         
-        for (int i = 0; i < jobs; i++ )
+        for (int i = 0; i < m_height; i++ )
         {
-            if ( i == jobs - 1 )
-            {
-                jobLines = m_height - start;
-            }
-            RayTracerData* renderJob = new RayTracerData(start, start + jobLines, m_scene);
+            RayTracerData* renderJob = new RayTracerData(start, start + 1, m_scene);
             start += jobLines;
             
             m_jobData.push_back(renderJob);

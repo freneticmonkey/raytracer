@@ -37,8 +37,9 @@ int main(int argc, char * argv[])
         return -1;
     }
     
+    // Use these to quickly test difference resolutions
     bool testRes = true;
-    bool highRes = false;
+    bool highRes = true;
     
     int width = 640;
     int height = 480;
