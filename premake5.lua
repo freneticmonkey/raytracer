@@ -26,9 +26,10 @@ project "raytracer"
       links { "SDL2.framework" }
       buildoptions "-std=c++11 -stdlib=libc++"
 
+   vpaths { ["task"] = "task/*" }
    vpaths { ["include"] = "**.h" }
-   vpaths { ["source"] = "**.h" }
-   files { "raytracer/**.h", "raytracer/**.cpp" }
+   vpaths { ["source"] = "**.cpp" }
+   files { "raytracer/**.h", "raytracer/**.cpp", "task/**.h" }
    
    -- NYI
    --configuration { "macosx" }

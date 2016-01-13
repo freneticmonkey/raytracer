@@ -34,8 +34,8 @@ Scene::~Scene()
 void Scene::moveTo(vec3 p)
 {
     m_position = p;
-	printf("New Pos: x: %3.2f y: %3.2f z: %3.2f\n", m_position.x, m_position.y, m_position.z );
-	fflush(stdout);
+//	printf("New Pos: x: %3.2f y: %3.2f z: %3.2f\n", m_position.x, m_position.y, m_position.z );
+//	fflush(stdout);
     
     eye = RayPtr(new Ray(m_position, m_lookingAt - m_position));
     vec3 cvec = cross(eye->vector(), vec3(0.0f, 1.0f, 0.0f));
@@ -88,10 +88,8 @@ void Scene::setupRender(int width, int height)
 
 void Scene::renderArea(int renderStart, int renderEnd)
 {
-    m_renderStart = renderStart;
-    m_renderEnd = renderEnd;
     int recursionDepth = 0;
-    for (int y = m_renderStart; y < m_renderEnd; y++)
+    for (int y = renderStart; y < renderEnd; y++)
     {
 		PixelLine::iterator px = (*m_pixels)[y]->begin();
         
@@ -111,7 +109,6 @@ void Scene::renderArea(int renderStart, int renderEnd)
 
 PixelsPtr Scene::getPixels() 
 { 
-	//renderArea();//0, configHeight, m_pixels);
 	return m_pixels;
 }
 

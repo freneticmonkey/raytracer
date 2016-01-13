@@ -20,14 +20,33 @@
 #include "geometry.h"
 #include "scene.h"
 
+#include "JobSystem.h"
+
 typedef std::shared_ptr<std::thread> ThreadPtr;
 typedef std::shared_ptr<Scene> ScenePtr;
+
+
+class RayTracerData : public JobSystem::Data<RayTracerData>
+{
+public:
+    int m_start;
+    int m_end;
+    ScenePtr m_scene;
+    RayTracerData(int start = 0, int end = 0, ScenePtr scene = nullptr)
+    {
+        m_start = start;
+        m_end = end;
+        m_scene = scene;
+    }
+    virtual ~RayTracerData() {}
+    
+};
 
 class Raytracer
 {
 public:
-    Raytracer();
-    ~Raytracer() {};
+    Raytracer(SDL_Window * window, int width, int height);
+    ~Raytracer();
 
 	void moveX(float unit)
     {
@@ -45,7 +64,7 @@ public:
         m_scene->moveTo(camPos);
     }
 
-	void setupScene(int width, int height);
+	void setupScene();
 
 	// Grabbed from StackOverflow.
     void PutPixel32_nolock(SDL_Surface * surface, int x, int y, Uint32 color)
@@ -64,15 +83,41 @@ public:
             SDL_UnlockSurface(surface);
     }
     
+    static void threadRenderJob(JobSystem::Job* job, RayTracerData *data);
+    
     void run();
     
-    void WriteToSurface(SDL_Surface * surface, int width, int height);
+    void Pump();
+    
+    void WriteToSurface();
 private:
     PixelsPtr m_pixels;
 	vec3 camPos;
     ScenePtr m_scene;
     int m_sectionSize;
     unsigned int m_threads;
+    
+    int m_width;
+    int m_height;
+    
+    RayTracerData rootJob;
+    JobSystem::Job* root;
+    
+    std::vector<RayTracerData *> jobData;
+    std::vector<JobSystem::Job*> renderJobs;
+    
+    bool renderActive;
+    bool useJobs;
+    
+    SDL_Surface * m_surface;
+    SDL_Window * m_window;
+    
+    std::chrono::steady_clock::time_point m_renderStart;
+    
+    float m_time;
+    
+    bool blitting;
+    std::chrono::system_clock::time_point m_onStart;
     
 };
 

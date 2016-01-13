@@ -115,7 +115,6 @@ private:
 	RayPtr eye;
     
     PixelsPtr  m_pixels;
-    
 };
 
 #endif

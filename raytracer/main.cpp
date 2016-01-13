@@ -26,18 +26,18 @@
 
 void UpdateRender(Raytracer * raytracer, SDL_Window * window, int width, int height)
 {
-    auto start = std::chrono::steady_clock::now();
+//    auto start = std::chrono::steady_clock::now();
     
     raytracer->run();
     
-    raytracer->WriteToSurface(SDL_GetWindowSurface(window), width, height);
+//    raytracer->WriteToSurface(SDL_GetWindowSurface(window), width, height);
     
-    auto end = std::chrono::steady_clock::now();
-    auto diff = end - start;
+//    auto end = std::chrono::steady_clock::now();
+//    auto diff = end - start;
+//    
+//    std::cout << "Elapsed Time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
     
-    std::cout << "Elapsed Time: " << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
-    
-    SDL_UpdateWindowSurface(window);
+    //SDL_UpdateWindowSurface(window);
 }
 
 int main(int argc, char * argv[])
@@ -53,7 +53,7 @@ int main(int argc, char * argv[])
         return -1;
     }
     
-    bool testRes = false;
+    bool testRes = true;
     bool highRes = false;
     
     int width = 640;
@@ -61,8 +61,8 @@ int main(int argc, char * argv[])
     
     if ( testRes )
     {
-        width = 128;
-        height = 96;
+        width = 320;
+        height = 240;
     }
     
     if ( highRes )
@@ -78,9 +78,7 @@ int main(int argc, char * argv[])
                                            height,
                                            SDL_WINDOW_OPENGL);
     
-    Raytracer raytracer;
-    
-    raytracer.setupScene(width, height);
+    Raytracer raytracer(window, width, height);
     
 	UpdateRender(&raytracer, window, width, height);
 
@@ -142,14 +140,16 @@ int main(int argc, char * argv[])
 
 				if ( needUpdate )
 				{
-					UpdateRender(&raytracer, window, width, height);
+                    //UpdateRender(&raytracer, window, width, height);
 					needUpdate = false;
 				}
             }
         }
         
+        raytracer.Pump();
+        
         // Limit to 60 fps
-        SDL_Delay(16);
+        //SDL_Delay(16);
     }
     
     
