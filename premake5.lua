@@ -29,7 +29,7 @@ project "raytracer"
    vpaths { ["task"] = "task/*" }
    vpaths { ["include"] = "**.h" }
    vpaths { ["source"] = "**.cpp" }
-   files { "raytracer/**.h", "raytracer/**.cpp", "task/**.h" }
+   files { "raytracer/**.h", "raytracer/**.cpp", "task/**.h", "task/**.cpp" }
    
    -- NYI
    --configuration { "macosx" }
